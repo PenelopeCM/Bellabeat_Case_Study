@@ -6,6 +6,9 @@ From dbo.dailyActivity_merged
 Select Distinct Id
 From dbo.dailyActivity_merged
 
+--RESULT: There are 33 distinct users in the dataset. We will inspect the data first and see what we can find.
+
+
 
 --Check NULL values
 
@@ -67,21 +70,6 @@ Select *
 From dbo.dailyActivity_merged
 Where ActivityDate='2016-05-12'
 
-/* Check percentage 10k steps in a month*/
-Select Id, Count(TotalSteps), Count(TotalSteps)/30 * 100.0 Percent10kSteps
-From dbo.dailyActivity_merged
-Where TotalSteps >= 10000
-Group by Id
-Order by Count(TotalSteps) DESC
-
---Compare TotalSteps vs Calories
-
-Select Id, Avg(TotalSteps) AvgSteps, Avg(Calories) AvgCals
-From dbo.dailyActivity_merged
---Where TotalSteps >= 10000
-Group by Id
-Order by Id
-
 
 
 --Check into SleepDay_merged table and standardize date format and update table
@@ -96,6 +84,7 @@ Set SleepDay=Convert(Date,SleepDay)
 Select *
 From dbo.sleepDay_merged
 Order by Id
+
 
 -- Join tables dailyActivity and sleepDay
 
@@ -231,6 +220,7 @@ From dbo.ActivityVsSleep
 --Group by Id
 Order by Id
 
+
 --Check average activity intensity per user
 
 Select Id,Avg(Calories) Cals, Avg(TotalSteps) Steps, Avg(VeryActiveMinutes) Very_Active,Avg(FairlyActiveMinutes) Fairly_Active, Avg(LightlyActiveMinutes)Lightly_Active, Avg(NewSedentaryMinutes) Sedentary
@@ -238,93 +228,4 @@ From dbo.ActivityVsSleep
 --Where NewSedentaryMinutes IS NOT NULL
 Group by Id
 Order by Id
---Select Id,ActivityDate, 
---	CASE When TotalMins >1440 then 'NEGATIVE' END as value FROM (VeryActiveMinutes+FairlyActiveMinutes+LightlyActiveMinutes+SedentaryMinutes+TotalTimeInBed) as TotalMins
-----Group by Id, ActivityDate
---From dbo.ActivityVsSleep
 
-
-----Create View to store data for visualisation
-
---Create View ActivityVsSleepView as
---Select Act.Id, 
---	Act.ActivityDate, 
---	Act.Calories,
---	Act.TotalSteps, 
---	Act.VeryActiveMinutes, 
---	Act.FairlyActiveMinutes,
---	Act.LightlyActiveMinutes,
---	Act.SedentaryMinutes-Sleep.TotalTimeInBed As NewSedentaryMinutes,
---	Sleep.TotalTimeInBed, TotalMinutesAsleep, 
---	Sleep.TotalTimeInBed-TotalMinutesAsleep As AwakeMinutes
---From dbo.dailyActivity_merged Act
---Join dbo.sleepDay_merged Sleep
---	On Act.Id=Sleep.Id
---	And Act.ActivityDate=Sleep.SleepDay
-
-
---Select Id, Count(ActivityDate)
---From dbo.ActivityVsSleepView
---Group by Id
-
-
---Select *
---From dbo.ActivityVsSleepView
---Where Id=8378563200
---Order by ActivityDate
-
---Select *
---From dbo.ActivityVsSleepView
---Where Id=5553957443
---Order by ActivityDate
-
--- Look inside hourlySteps table
-
-Select *
-From dbo.hourlySteps_merged
-
-
--- To make total users consistent, users with <20 ActivityDates will be excluded
-
-Delete from hourlySteps_merged
-where Id=2347167796 OR Id=4057192912 OR Id=8253242879
-
-
--- Check what time of the day users go for a walk
-
---Select StepTotal
---	Sum(CASE WHEN TotalSteps <> 0 THEN 1 Else 0 END) as Weekend_User,
---	Sum(CASE WHEN TotalSteps = 0 THEN 1 Else 0 END) as Weekend_NonUser,
---	Count(Activitydate) as Total_Users
-
-
-
-----SET DATEFIRST 1
---Select --DATEPART(DW, CAST(ActivityHour as datetime)) DW_No,
---	DATEPART(HOUR, CAST(ActivityHour as datetime)) Hour_No,
---	Avg(Cast(StepTotal AS Int)) as Total_Steps
---From dbo.hourlySteps_merged
---GROUP BY
---	--DATEPART(DW,CAST(ActivityHour as datetime))
---	DATEPART(HOUR, CAST(ActivityHour as datetime))
---Order by Hour_No
-
-
-SELECT DATENAME(WEEKDAY,'ActivityHour'), AVG(Cast(StepTotal as int)
-FROM dbo.hourlySteps_merged
---WHERE    DAYOFWEEK(`date`) BETWEEN 2 AND 6
-GROUP BY DATENAME(WEEKDAY,'ActivityHour')
-
-Select Avg(Cast(StepTotal AS Int)) as Total_Steps,
-	Cast(ActivityHour as Date)
-From dbo.hourlySteps_merged
-GROUP BY ActivityHour
-Order By ActivityHour
-
-
-
-
-Select Id, Count(StepTotal)
-From dbo.hourlySteps_merged
-Group by Id
-Order by Id
